@@ -1,3 +1,59 @@
+function Get-PerformanceCounterID
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        $Name
+    )
+ 
+    if ($script:perfHash -eq $null)
+    {
+        Write-Progress -Activity 'Retrieving PerfIDs' -Status 'Working'
+ 
+        $key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\CurrentLanguage'
+        $counters = (Get-ItemProperty -Path $key -Name Counter).Counter
+        $script:perfHash = @{}
+        $all = $counters.Count
+ 
+        for($i = 0; $i -lt $all; $i+=2)
+        {
+           Write-Progress -Activity 'Retrieving PerfIDs' -Status 'Working' -PercentComplete ($i*100/$all)
+           $script:perfHash.$($counters[$i+1]) = $counters[$i]
+        }
+    }
+ 
+    $script:perfHash.$Name
+}
+
+
+Function Get-PerformanceCounterLocalName
+{
+    param
+    (
+        [UInt32]
+	$ID,
+ 
+	$ComputerName = $env:COMPUTERNAME
+    )
+ 
+    $code = '[DllImport("pdh.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern UInt32 PdhLookupPerfNameByIndex(string szMachineName, uint dwNameIndex, System.Text.StringBuilder szNameBuffer, ref uint pcchNameBufferSize);'
+ 
+    $Buffer = New-Object System.Text.StringBuilder(1024)
+    [UInt32]$BufferSize = $Buffer.Capacity
+ 
+    $t = Add-Type -MemberDefinition $code -PassThru -Name PerfCounter -Namespace Utility
+    $rv = $t::PdhLookupPerfNameByIndex($ComputerName, $id, $Buffer, [Ref]$BufferSize)
+ 
+    if ($rv -eq 0)
+    {
+        $Buffer.ToString().Substring(0, $BufferSize-1)
+    }
+    else
+    {
+        Throw 'Get-PerformanceCounterLocalName : Unable to retrieve localized name. Check computer name and performance counter ID.'
+    }
+}
+
 Function Import-XMLConfig
 {
 <#
@@ -63,13 +119,27 @@ Function Import-XMLConfig
 
     # Create the Performance Counters Array
     $Config.Counters = @()
+    $Config.CountersRename = @{}
 
     # Load each row from the configuration file into the counter array
     foreach ($counter in $xmlfile.Configuration.PerformanceCounters.Counter)
     {
-        $Config.Counters += $counter.Name
-    }
+		$counterName = [regex]::Replace($counter.Name, '@id:(\d+)', { param( $match ); Get-PerformanceCounterLocalName -id $match.Groups[1].Value })
+		$Config.Counters += $counterName
 
+	    $counterName = $counterName -replace '\\','\\'
+	    $counterName = $counterName -replace '\(','\('
+	    $counterName = $counterName -replace '\)','\)'
+	    $counterName = $counterName -replace '\*','(.*)'
+	    $counterName = $counterName -replace '\[','\['
+	    $counterName = $counterName -replace '\]','\]'
+	    $counterName = $counterName -replace '\?','\?'
+	    $counterName = $counterName -replace '\:','\:'
+	    $counterName = $counterName -replace '\s','\s'
+	    $counterName += '$'
+		$Config.CountersRename[$counterName] = $counter.RenameTo.toLower() 
+    }
+    
     # Create the Metric Cleanup Hashtable
     $Config.MetricReplace = New-Object System.Collections.Specialized.OrderedDictionary
 
@@ -146,8 +216,16 @@ function PSUsing
     Finally
     {
         if ($inputObject -ne $null)
-        {
-            if ($inputObject.psbase -eq $null)
+        {		
+			if ($inputObject.GetType().FullName -eq "System.Net.Sockets.TcpClient")
+			{
+				$inputObject.Close()
+			}
+			elseif ($inputObject.GetType().FullName -eq "System.Net.Sockets.UdpClient")
+			{
+				$inputObject.Close()
+			}
+            elseif ($inputObject.psbase -eq $null)
             {
                 $inputObject.Dispose()
             }
@@ -177,6 +255,7 @@ function SendMetrics
             {
                 PSUsing ($udpobject = new-Object system.Net.Sockets.Udpclient($CarbonServer, $CarbonServerPort)) -ScriptBlock {
                     $enc = new-object system.text.asciiencoding
+					$Message= ""
                     foreach ($metricString in $Metrics)
                     {
                         $Message += "$($metricString)`n"
@@ -186,7 +265,7 @@ function SendMetrics
                     Write-Verbose "Byte Length: $($byte.Length)"
                     $Sent = $udpobject.Send($byte,$byte.Length)
                 }
-
+Write-Verbose "Sent via UDP"
                 Write-Verbose "Sent via UDP to $($CarbonServer) on port $($CarbonServerPort)."
             }
             else
