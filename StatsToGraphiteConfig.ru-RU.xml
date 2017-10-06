@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+	<Graphite>
+		<CarbonServer>graphite-relay.skbkontur.ru</CarbonServer>
+		<CarbonServerPort>2003</CarbonServerPort>
+		<MetricPath>KOPF.System.Windows</MetricPath>
+		<NodeHostName>$env:COMPUTERNAME</NodeHostName>
+		<MetricSendIntervalSeconds>60</MetricSendIntervalSeconds>
+		<SendUsingUDP>false</SendUsingUDP>
+	</Graphite>
+	<PerformanceCounters>
+		<Counter Name="\Сетевой интерфейс(*)\Получено байт/с"     		RenameTo="\Network Interface($1)\Bytes Received/sec"/>
+		<Counter Name="\Сетевой интерфейс(*)\Отправлено байт/с"   		RenameTo="\Network Interface($1)\Bytes Sent/sec"/>
+		<Counter Name="\Процессор(_Total)\% загруженности процессора" 	RenameTo="\Processor(_Total)\% Processor Time"/>
+		<Counter Name="\Память\Доступно МБ"         					RenameTo="\Memory\Available MBytes"/>
+		<Counter Name="\Память\Обмен страниц/с" 						RenameTo="\Memory\Pages/sec"/>
+		<Counter Name="\Память\Ввод страниц/сек"  						RenameTo="\Memory\Pages Input/sec"/>
+		<Counter Name="\Система\Длина очереди процессора"   			RenameTo="\System\Processor Queue Length"/>
+		<Counter Name="\Система\Потоки"  								RenameTo="\System\Threads"/>
+		<Counter Name="\Логический диск(*)\Свободно мегабайт"     		RenameTo="\LogicalDisk($1)\Free Megabytes"/>
+		<Counter Name="\Логический диск(*)\% свободного места"     		RenameTo="\LogicalDisk($1)\% Free Space"/>
+		<Counter Name="\Физический диск(*)\% активности диска при чтении"     	RenameTo="\PhysicalDisk($1)\% Disk Read Time"/>
+		<Counter Name="\Физический диск(*)\% активности диска"     		RenameTo="\PhysicalDisk($1)\% Disk Time"/>
+		<Counter Name="\Физический диск(*)\% активности диска при записи"     	RenameTo="\PhysicalDisk($1)\% Disk Write Time"/>
+		<Counter Name="\Физический диск(*)\Процент времени бездействия"    		RenameTo="\PhysicalDisk($1)\% Idle Time"/>
+		<Counter Name="\Физический диск(*)\Средний размер одного чтения с диска (байт)"    	RenameTo="\PhysicalDisk($1)\Avg. Disk Bytes/Read"/>
+		<Counter Name="\Физический диск(*)\Средний размер одного обмена с диском (байт)"    RenameTo="\PhysicalDisk($1)\Avg. Disk Bytes/Transfer"/>
+		<Counter Name="\Физический диск(*)\Средний размер одной записи на диск (байт)"     	RenameTo="\PhysicalDisk($1)\Avg. Disk Bytes/Write"/>
+		<Counter Name="\Физический диск(*)\Текущая длина очереди диска"     	RenameTo="\PhysicalDisk($1)\Current Disk Queue Length"/>
+		<Counter Name="\Физический диск(*)\Скорость обмена с диском (байт/с)"   RenameTo="\PhysicalDisk($1)\Disk Bytes/sec"/>
+		<Counter Name="\Физический диск(*)\Скорость чтения с диска (байт/с)"    RenameTo="\PhysicalDisk($1)\Disk Read Bytes/sec"/>
+		<Counter Name="\Физический диск(*)\Обращений чтения с диска/с"     		RenameTo="\PhysicalDisk($1)\Disk Reads/sec"/>
+		<Counter Name="\Физический диск(*)\Обращений к диску/с"     			RenameTo="\PhysicalDisk($1)\Disk Transfers/sec"/>
+		<Counter Name="\Физический диск(*)\Скорость записи на диск (байт/с)"    RenameTo="\PhysicalDisk($1)\Disk Write Bytes/sec"/>
+		<Counter Name="\Физический диск(*)\Обращений записи на диск/с"     		RenameTo="\PhysicalDisk($1)\Disk Writes/sec"/>
+		<Counter Name="\Физический диск(*)\Расщеплений ввода-вывода/сек"    	RenameTo="\PhysicalDisk($1)\Split IO/Sec"/>
+	</PerformanceCounters>
+	<MetricCleaning>
+		<!-- These will be found and replaced in the order they appear here -->
+		<MetricReplace This="physicaldisk\(.* (.*)\:\)" With="physicaldisk.$1-drive"/>
+		<MetricReplace This="logicaldisk\((\w)\:\)" With="logicaldisk.$1-drive"/>
+		<MetricReplace This="Network Interface\(([^\)]*)(?&lt;! _\d+)\)" With="Network Interface($1 _0)"/>
+		<MetricReplace This="Network Interface\((.*?) (?:_(\d+)|)\)" With="Network Interface($1-$2)"/>
+		<MetricReplace This="Network Interface\((intel)(?:\[r\]|)(.*?)\)" With="Network Interface($1.$2)"/>
+		<MetricReplace This="Network Interface\((microsoft)(.*?)\)" With="Network Interface($1.$2)"/>
+		<MetricReplace This="Network Interface\((.*?)\[майкрософт\].*?\)" With="Network Interface(microsoft.$1)"/>
+		<MetricReplace This="Packets Received(\/|)" With="RX.pkts-"/>
+		<MetricReplace This="Packets Sent(\/|)" With="TX.pkts-"/>
+		<MetricReplace This="Bytes Received(\/|)" With="RX.bytes-"/>
+		<MetricReplace This="Bytes Sent(\/|)" With="TX.bytes-"/>
+		<MetricReplace This="^\\\\" With=""/>
+		<MetricReplace This="\\\\" With=""/>
+		<MetricReplace This="\/" With="-"/>
+		<MetricReplace This=":" With="."/>
+		<MetricReplace This="\\" With="."/>
+		<MetricReplace This="\(" With="."/>
+		<MetricReplace This="\)" With=""/>
+		<MetricReplace This="\]" With=""/>
+		<MetricReplace This="\[" With=""/>
+		<MetricReplace This="\%" With=""/>
+		<MetricReplace This="\s+" With=""/>
+		<MetricReplace This="\.\." With="."/>
+		<MetricReplace This="_" With=""/>
+		<MetricReplace This="\#" With="num"/>
+		<MetricReplace This="\.processor\." With=".cpu."/>
+		<MetricReplace This="\.cpu\.total\.processortime" With=".cpu.usage"/>
+		<MetricReplace This="\.networkinterface\." With=".network."/>
+		
+		<MetricReplace This="\.physicaldisk\." With=".hdd."/>
+		<MetricReplace This="\.logicaldisk\." With=".volumes."/>		
+	</MetricCleaning>
+	<Filtering>
+		<MetricFilter Name="isatap"/>
+		<MetricFilter Name="teredo tunneling"/>
+		<MetricFilter Name="logicaldisk\(_total\)"/>
+		<MetricFilter Name="logicaldisk\(harddiskvolume\d+\)"/>
+	</Filtering>
+	<Logging>
+		<VerboseOutput>false</VerboseOutput>
+	</Logging>
+</Configuration>
