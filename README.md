@@ -3,8 +3,9 @@
 * Rename metrics in config file
 * Get metrics by identificator for non-english systems
 * Auto-detect system language and choose appropriate config file
+* Parameter configFilePath 
 
-Default Config filename - StatsToGraphiteConfig.{'SystemLanguage'}.xml
+Default Config filename - StatsToGraphiteConfig.{'SystemLanguage'}.xml.
 For example, StatsToGraphiteConfig.en-US.xml
 
 # Graphite PowerShell Functions
