@@ -1,8 +1,10 @@
 Set-StrictMode -Version Latest
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+$systemUILanguage = ([CultureInfo]::InstalledUICulture).Name
+
 # Determine The Path Of The XML Config File
-$configPath = [string](Split-Path -Parent $MyInvocation.MyCommand.Definition) + '\StatsToGraphiteConfig.xml'
+$configPath = [string](Split-Path -Parent $MyInvocation.MyCommand.Definition) + "\StatsToGraphiteConfig.$systemUILanguage.xml"
 
 # Internal Functions
 . $here\Functions\Internal.ps1

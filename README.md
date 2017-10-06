@@ -1,7 +1,11 @@
-# Notice (30th July, 2016)
-I am no longer maintaining this project as there is a far better tool to do this now called [Telagraf](https://github.com/influxdata/telegraf), which supports sending to InfluxDB and Graphite.
+# New Features
 
-You can a blog post on how to set it up here: [https://hodgkins.io/windows-metric-dashboards-with-influxdb-and-grafana](https://hodgkins.io/windows-metric-dashboards-with-influxdb-and-grafana)
+* Rename metrics in config file
+* Get metrics by identificator for non-english systems
+* Auto-detect system language and choose appropriate config file
+
+Default Config filename - StatsToGraphiteConfig.{'SystemLanguage'}.xml
+For example, StatsToGraphiteConfig.en-US.xml
 
 # Graphite PowerShell Functions
 
@@ -64,6 +68,10 @@ Here are some other examples:
 * `<Counter Name="\Web Service(YourIISWebSite)\Total Bytes Sent"/>`
 * `<Counter Name="\ASP.NET Apps v4.0.30319(_lm_w3svc_1_Root_YourIISApp)\Request Wait Time"/>`
 * `<Counter Name="\PhysicalDisk(*)\Avg. Disk Write Queue Length"/>`
+* `<Counter Name="\Сетевой интерфейс(*)\Получено байт/с" RenameTo="\Network Interface($1)\Bytes Received/sec"/>`
+* `<Counter Name="\@id:234(*)\@id:212" RenameTo="\PhysicalDisk($1)\Disk Transfers/sec"/>`
+
+Identificators can be found in regedit HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\CurrentLanguage
 
 #### MetricReplace Configuration Section
 
